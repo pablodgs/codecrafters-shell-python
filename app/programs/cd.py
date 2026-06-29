@@ -1,6 +1,11 @@
 import os
 
 def cd(path: str) -> None:
+    home: str = os.environ.get("HOME", "")
+
+    if path == "~":
+        path = home
+
     try:
         os.chdir(path)
     except FileNotFoundError:
