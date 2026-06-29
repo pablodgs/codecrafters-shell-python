@@ -6,7 +6,7 @@ from app.routines.find_executables import find_executables
 
 
 def main():
-    set_of_builtin_commands: set[str] = {"exit", "echo", "type"}
+    set_of_builtin_commands: set[str] = {"exit", "echo", "type", "pwd"}
     path: str = os.environ.get("PATH", "")
 
     # REPL loop
