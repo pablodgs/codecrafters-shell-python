@@ -2,12 +2,14 @@ import sys
 
 
 def main():
-    sys.stdout.write("$ ")
+    # REPL loop
+    while True:
+        sys.stdout.write("$ ")
 
-    # Read user input from standard input
-    user_input = sys.stdin.readline().strip()
+        # Read user input from standard input
+        user_input = sys.stdin.readline().strip()
 
-    sys.stdout.write(f"{user_input}: command not found\n")
+        sys.stdout.write(f"{user_input}: command not found\n")
 
     pass
 
