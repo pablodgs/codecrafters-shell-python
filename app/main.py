@@ -9,9 +9,10 @@ def main():
         # Read user input from standard input
         user_input = sys.stdin.readline().strip()
 
-        sys.stdout.write(f"{user_input}: command not found\n")
-
-    pass
+        if user_input == "exit":
+            break
+        else:
+            sys.stdout.write(f"{user_input}: command not found\n")
 
 
 if __name__ == "__main__":
