@@ -1,8 +1,11 @@
 import sys
+import os
+from programs.type import call_type_program
 
 
 def main():
-    set_of_commands = {"exit", "echo", "type"}
+    set_of_builtin_commands = {"exit", "echo", "type"}
+    path = os.environ.get("PATH", "")
 
     # REPL loop
     while True:
@@ -14,18 +17,19 @@ def main():
         if len(user_words_list) > 0:
             user_command = user_words_list[0]
             raw_user_args = user_input[len(user_command)+1:]
+            user_args = user_words_list[1:]
         else:
             user_command = ""
             raw_user_args = ""
+            user_args = []
+        
+        # Handle user commands
         if user_command == "exit":
             break
         elif user_command == "echo":
             sys.stdout.write(f"{raw_user_args}\n")
         elif user_command == "type":
-            if raw_user_args in set_of_commands:
-                sys.stdout.write(f"{raw_user_args} is a shell builtin\n")
-            else:
-                sys.stdout.write(f"{raw_user_args} not found\n")
+            call_type_program(set_of_builtin_commands, user_args, path)
         else:
             sys.stdout.write(f"{user_command}: command not found\n")
 
