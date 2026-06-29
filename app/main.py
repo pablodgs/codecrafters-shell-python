@@ -2,6 +2,8 @@ import sys
 
 
 def main():
+    set_of_commands = {"exit", "echo", "type"}
+
     # REPL loop
     while True:
         sys.stdout.write("$ ")
@@ -19,6 +21,11 @@ def main():
             break
         elif user_command == "echo":
             sys.stdout.write(f"{raw_user_args}\n")
+        elif user_command == "type":
+            if raw_user_args in set_of_commands:
+                sys.stdout.write(f"{raw_user_args} is a shell builtin\n")
+            else:
+                sys.stdout.write(f"{raw_user_args} not found\n")
         else:
             sys.stdout.write(f"{user_command}: command not found\n")
 
