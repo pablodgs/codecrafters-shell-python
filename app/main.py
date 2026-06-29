@@ -2,8 +2,14 @@ import sys
 
 
 def main():
-    # TODO: Uncomment the code below to pass the first stage
     sys.stdout.write("$ ")
+
+    # Read user input from standard input
+    user_input = sys.stdin.readline()
+    user_command = user_input
+
+    sys.stdout.write(f"{user_command}: command not found\n")
+
     pass
 
 
