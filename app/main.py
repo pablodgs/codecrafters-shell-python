@@ -32,6 +32,8 @@ def main():
             sys.stdout.write(f"{raw_user_args}\n")
         elif user_command == "type":
             call_type_program(set_of_builtin_commands, user_args, path)
+        elif user_command == "pwd":
+            sys.stdout.write(f"{os.getcwd()}\n")
         else:
             list_of_executables = find_executables(path)
             # Execute the command if it is found in the list of executables
