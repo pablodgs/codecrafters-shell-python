@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 from app.programs.type import call_type_program
 from app.routines.find_executables import find_executables
 
@@ -36,7 +37,7 @@ def main():
             # Execute the command if it is found in the list of executables
             if user_command in list_of_executables:
                 executable_path = list_of_executables[user_command]
-                os.execv(executable_path, [user_command] + user_args)
+                subprocess.run([executable_path] + user_args)
             else:
                 sys.stdout.write(f"{user_command}: command not found\n")
 
