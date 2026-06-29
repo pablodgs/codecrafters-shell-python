@@ -1,6 +1,6 @@
 import sys
 import os
-from programs.type import call_type_program
+from app.programs.type import call_type_program
 
 
 def main():
