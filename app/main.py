@@ -36,8 +36,7 @@ def main():
             list_of_executables = find_executables(path)
             # Execute the command if it is found in the list of executables
             if user_command in list_of_executables:
-                executable_path = list_of_executables[user_command]
-                subprocess.run([executable_path] + user_args)
+                subprocess.run([user_command] + user_args)
             else:
                 sys.stdout.write(f"{user_command}: command not found\n")
 
