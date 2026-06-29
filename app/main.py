@@ -1,11 +1,12 @@
 import sys
 import os
 from app.programs.type import call_type_program
+from app.routines.find_executables import find_executables
 
 
 def main():
-    set_of_builtin_commands = {"exit", "echo", "type"}
-    path = os.environ.get("PATH", "")
+    set_of_builtin_commands: set[str] = {"exit", "echo", "type"}
+    path: str = os.environ.get("PATH", "")
 
     # REPL loop
     while True:
@@ -31,7 +32,13 @@ def main():
         elif user_command == "type":
             call_type_program(set_of_builtin_commands, user_args, path)
         else:
-            sys.stdout.write(f"{user_command}: command not found\n")
+            list_of_executables = find_executables(path)
+            # Execute the command if it is found in the list of executables
+            if user_command in list_of_executables:
+                executable_path = list_of_executables[user_command]
+                os.execv(executable_path, [user_command] + user_args)
+            else:
+                sys.stdout.write(f"{user_command}: command not found\n")
 
 
 if __name__ == "__main__":
