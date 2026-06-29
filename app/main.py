@@ -3,10 +3,11 @@ import os
 import subprocess
 from app.programs.type import call_type_program
 from app.routines.find_executables import find_executables
+from app.programs.cd import cd
 
 
 def main():
-    set_of_builtin_commands: set[str] = {"exit", "echo", "type", "pwd"}
+    set_of_builtin_commands: set[str] = {"exit", "echo", "type", "pwd", "cd"}
     path: str = os.environ.get("PATH", "")
 
     # REPL loop
@@ -34,6 +35,8 @@ def main():
             call_type_program(set_of_builtin_commands, user_args, path)
         elif user_command == "pwd":
             sys.stdout.write(f"{os.getcwd()}\n")
+        elif user_command == "cd":
+            cd(raw_user_args)
         else:
             list_of_executables = find_executables(path)
             # Execute the command if it is found in the list of executables
