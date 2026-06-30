@@ -4,6 +4,7 @@ import subprocess
 from app.programs.type import call_type_program
 from app.routines.find_executables import find_executables
 from app.programs.cd import cd
+from app.routines.process_user_input import process_user_input
 
 
 def main():
@@ -15,28 +16,22 @@ def main():
         sys.stdout.write("$ ")
 
         # Read user input from standard input
-        user_input = sys.stdin.readline().strip()
-        user_words_list = user_input.split()
-        if len(user_words_list) > 0:
-            user_command = user_words_list[0]
-            raw_user_args = user_input[len(user_command)+1:]
-            user_args = user_words_list[1:]
-        else:
-            user_command = ""
-            raw_user_args = ""
-            user_args = []
+        raw_user_input = sys.stdin.readline()
+        parsed_values = process_user_input(raw_user_input)
+        user_command = parsed_values.command
+        user_args = [value for _, value in parsed_values.parsed_values[1:]]
         
         # Handle user commands
         if user_command == "exit":
             break
         elif user_command == "echo":
-            sys.stdout.write(f"{raw_user_args}\n")
+            sys.stdout.write(f"{' '.join([value for _, value in parsed_values.parsed_values[1:]])}\n")
         elif user_command == "type":
             call_type_program(set_of_builtin_commands, user_args, path)
         elif user_command == "pwd":
             sys.stdout.write(f"{os.getcwd()}\n")
         elif user_command == "cd":
-            cd(raw_user_args)
+            cd(' '.join(user_args))
         else:
             list_of_executables = find_executables(path)
             # Execute the command if it is found in the list of executables
