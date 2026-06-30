@@ -32,21 +32,27 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
     user_literal_strings: list[str] = [""]
     current_user_literal_strings_index = 0
     
+    last_character_was_quote = False
+
     for char in user_input:
         if user_command_complete:
             if parsing_string_literal:
                 if char == "'":
                     parsing_string_literal = False
-                    current_user_literal_strings_index += 1
-                    user_literal_strings.append("")
-                    parsed_values_index += 1
-                    parsed_values.append((UserInputType.STRING_LITERAL, ""))
+                    if not last_character_was_quote:
+                        current_user_literal_strings_index += 1
+                        user_literal_strings.append("")
+                        parsed_values_index += 1
+                        parsed_values.append((UserInputType.STRING_LITERAL, ""))
+                    last_character_was_quote = True
                 else:
+                    last_character_was_quote = False
                     user_literal_strings[current_user_literal_strings_index] += char
                     parsed_values[parsed_values_index] = (UserInputType.STRING_LITERAL, user_literal_strings[current_user_literal_strings_index])
             else:
                 if char == "'":
                     parsing_string_literal = True
+                    last_character_was_quote = True
                 else:
                     if char == " ":
                         if parsing_word:
