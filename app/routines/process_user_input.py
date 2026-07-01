@@ -67,10 +67,9 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
                             user_args.append("")
                             parsed_values_index += 1
                             parsed_values.append((UserInputType.ARGUMENT, ""))
-                        else:
-                            if not first_space_encountered:
-                                first_space_encountered = True
-                                raw_args += char
+                        if not first_space_encountered:
+                            first_space_encountered = True
+                            raw_args += char
                     else:
                         first_space_encountered = False
                         parsing_word = True
