@@ -11,6 +11,7 @@ class ParsedUserInput(NamedTuple):
     parsed_values: list[tuple[UserInputType, str]]
     command: str
     args: list[str]
+    raw_args: str
 
 def process_user_input(raw_user_input: str) -> ParsedUserInput:
     
@@ -20,12 +21,14 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
     user_command_complete = False
     parsing_string_literal = False
     parsing_word = True
+    first_space_encountered = False
     
     parsed_values: list[tuple[UserInputType, str]] = [(UserInputType.COMMAND, "")]
     parsed_values_index = 0
     
     user_command: str = ""
     
+    raw_args: str = ""
     user_args: list[str] = [""]
     current_user_args_index = 0
     
@@ -37,6 +40,7 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
     for char in user_input:
         if user_command_complete:
             if parsing_string_literal:
+                first_space_encountered = False
                 if char == "'":
                     parsing_string_literal = False
                     if not last_character_was_quote:
@@ -48,11 +52,13 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
                 else:
                     last_character_was_quote = False
                     user_literal_strings[current_user_literal_strings_index] += char
+                    raw_args += char
                     parsed_values[parsed_values_index] = (UserInputType.STRING_LITERAL, user_literal_strings[current_user_literal_strings_index])
             else:
                 if char == "'":
                     parsing_string_literal = True
                     last_character_was_quote = True
+                    first_space_encountered = False
                 else:
                     if char == " ":
                         if parsing_word:
@@ -61,9 +67,15 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
                             user_args.append("")
                             parsed_values_index += 1
                             parsed_values.append((UserInputType.ARGUMENT, ""))
+                        else:
+                            if not first_space_encountered:
+                                first_space_encountered = True
+                                raw_args += char
                     else:
+                        first_space_encountered = False
                         parsing_word = True
                         user_args[current_user_args_index] += char
+                        raw_args += char
                         parsed_values[parsed_values_index] = (UserInputType.ARGUMENT, user_args[current_user_args_index])
         else:
             if parsing_user_command:
@@ -111,4 +123,4 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
                         parsed_values[parsed_values_index] = (UserInputType.COMMAND, user_command)
                         parsing_user_command = True
     
-    return ParsedUserInput(parsed_values=parsed_values, command=user_command, args=user_args)
+    return ParsedUserInput(parsed_values=parsed_values, command=user_command, args=user_args, raw_args=raw_args)

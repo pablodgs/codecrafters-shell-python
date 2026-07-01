@@ -20,12 +20,13 @@ def main():
         parsed_values = process_user_input(raw_user_input)
         user_command = parsed_values.command
         user_args = [value for _, value in parsed_values.parsed_values[1:]]
+        raw_args = parsed_values.raw_args
         
         # Handle user commands
         if user_command == "exit":
             break
         elif user_command == "echo":
-            sys.stdout.write(f"{' '.join([value for _, value in parsed_values.parsed_values[1:]])}\n")
+            sys.stdout.write(f"{raw_args}\n")
         elif user_command == "type":
             call_type_program(set_of_builtin_commands, user_args, path)
         elif user_command == "pwd":
