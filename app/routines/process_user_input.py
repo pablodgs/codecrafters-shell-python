@@ -122,5 +122,7 @@ def process_user_input(raw_user_input: str) -> ParsedUserInput:
                         user_command += char
                         parsed_values[parsed_values_index] = (UserInputType.COMMAND, user_command)
                         parsing_user_command = True
-    
-    return ParsedUserInput(parsed_values=parsed_values[0:-1], command=user_command, args=user_args, raw_args=raw_args)
+        if parsed_values[-1][1] == "":
+            parsed_values.pop()
+            parsed_values_index -= 1
+    return ParsedUserInput(parsed_values=parsed_values, command=user_command, args=user_args, raw_args=raw_args)
