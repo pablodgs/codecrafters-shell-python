@@ -35,6 +35,7 @@ def main():
             cd(' '.join(user_args))
         else:
             list_of_executables = find_executables(path)
+            print(f"user_args: {user_args}")
             # Execute the command if it is found in the list of executables
             if user_command in list_of_executables:
                 subprocess.run([user_command] + user_args)
