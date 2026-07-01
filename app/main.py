@@ -32,7 +32,7 @@ def main():
         elif user_command == "pwd":
             sys.stdout.write(f"{os.getcwd()}\n")
         elif user_command == "cd":
-            cd(' '.join(user_args))
+            cd(f'{raw_args}')
         else:
             list_of_executables = find_executables(path)
             # Execute the command if it is found in the list of executables
