@@ -40,12 +40,14 @@ def _complete_builtin(text: str, state: int) -> str | None:
     return None
 
 
-def _read_user_input() -> str:
+def _read_user_input(prompt: str) -> str:
     if sys.stdin.isatty() and readline is not None:
         try:
-            return input() + "\n"
+            return input(prompt) + "\n"
         except EOFError:
             return ""
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
     return sys.stdin.readline()
 
 
@@ -71,7 +73,7 @@ def main():
     # REPL loop
     while True:
         # Read user input from standard input
-        raw_user_input = _read_user_input()
+        raw_user_input = _read_user_input("$ ")
         if not raw_user_input:
             break
 

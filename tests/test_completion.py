@@ -80,7 +80,11 @@ class CommandCompletionTests(unittest.TestCase):
         )
 
         self.assertEqual(status, 0)
-        self.assertIn(b"echo Hello\r\n", output)
+        self.assertTrue(output.startswith(b"$ "))
+        self.assertTrue(
+            b"\r$ echo Hello\r\n" in output
+            or b"\x1b[6Go Hello\r\n" in output
+        )
 
     def test_unknown_command_keeps_text_and_rings_bell(self) -> None:
         output, status = run_interactive_shell(
@@ -99,7 +103,11 @@ class CommandCompletionTests(unittest.TestCase):
         output, status = run_interactive_shell([(b"exi\t\n", None)])
 
         self.assertEqual(status, 0)
-        self.assertIn(b"exit ", output)
+        self.assertTrue(output.startswith(b"$ "))
+        self.assertTrue(
+            b"\r$ exit \r\n" in output
+            or b"\x1b[6Gt \r\n" in output
+        )
 
 
 if __name__ == "__main__":
