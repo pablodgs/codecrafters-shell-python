@@ -1,45 +1,36 @@
 import sys
-import os
-import subprocess
-from app.programs.type import call_type_program
-from app.routines.find_executables import find_executables
-from app.programs.cd import cd
-from app.routines.process_user_input import process_user_input
+from app.expansion import expand_words
+from app.execution import execute_pipeline
+from app.parsing import parse
 
 
 def main():
-    set_of_builtin_commands: set[str] = {"exit", "echo", "type", "pwd", "cd"}
-    path: str = os.environ.get("PATH", "")
-
     # REPL loop
     while True:
         sys.stdout.write("$ ")
+        sys.stdout.flush()
 
         # Read user input from standard input
         raw_user_input = sys.stdin.readline()
-        parsed_values = process_user_input(raw_user_input)
-        user_command = parsed_values.command
-        user_args = [value for _, value in parsed_values.parsed_values[1:]]
-        raw_args = parsed_values.raw_args
-        
-        # Handle user commands
-        if user_command == "exit":
+        if not raw_user_input:
             break
-        elif user_command == "echo":
-            sys.stdout.write(f"{raw_args}\n")
-        elif user_command == "type":
-            call_type_program(set_of_builtin_commands, user_args, path)
-        elif user_command == "pwd":
-            sys.stdout.write(f"{os.getcwd()}\n")
-        elif user_command == "cd":
-            cd(f'{raw_args}')
-        else:
-            list_of_executables = find_executables(path)
-            # Execute the command if it is found in the list of executables
-            if user_command in list_of_executables:
-                subprocess.run([user_command] + user_args)
-            else:
-                sys.stdout.write(f"{user_command}: command not found\n")
+
+        parsed_input = parse(raw_user_input)
+        if parsed_input.error is not None:
+            sys.stdout.write(f"syntax error: {parsed_input.error}\n")
+            continue
+        if parsed_input.incomplete:
+            sys.stdout.write("syntax error: incomplete input\n")
+            continue
+        if not parsed_input.pipeline.commands:
+            continue
+        try:
+            result = execute_pipeline(parsed_input.pipeline)
+        except ValueError as error:
+            sys.stderr.write(f"shell: {error}\n")
+            continue
+        if result.should_exit:
+            break
 
 
 if __name__ == "__main__":
