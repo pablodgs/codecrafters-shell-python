@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.parsing.lexer import TokenKind, Word, lex
+from app.parsing.lexer import QuoteContext, TokenKind, Word, lex
 
 
 @dataclass(frozen=True)
@@ -8,6 +8,7 @@ class Redirection:
     operator: TokenKind
     target: Word
     start: int
+    fd: int
 
 
 @dataclass(frozen=True)
@@ -34,7 +35,7 @@ def parse(source: str) -> ParseResult:
     commands: list[SimpleCommand] = []
     words: list[Word] = []
     redirections: list[Redirection] = []
-    pending_redirection: tuple[TokenKind, int] | None = None
+    pending_redirection: tuple[TokenKind, int, int] | None = None
     saw_pipe = False
 
     for token in lex_result.tokens:
@@ -44,8 +45,8 @@ def parse(source: str) -> ParseResult:
             if pending_redirection is None:
                 words.append(token.value)
             else:
-                operator, start = pending_redirection
-                redirections.append(Redirection(operator, token.value, start))
+                operator, start, fd = pending_redirection
+                redirections.append(Redirection(operator, token.value, start, fd))
                 pending_redirection = None
             continue
 
@@ -59,7 +60,23 @@ def parse(source: str) -> ParseResult:
                     Pipeline(tuple(commands)),
                     error="expected a word after redirection",
                 )
-            pending_redirection = (token.kind, token.start)
+            fd = 0 if token.kind is TokenKind.REDIRECT_INPUT else 1
+            if words:
+                possible_fd = words[-1]
+                is_unquoted_number = (
+                    possible_fd.end == token.start
+                    and possible_fd.parts
+                    and all(
+                        part.quote_context is QuoteContext.UNQUOTED
+                        for part in possible_fd.parts
+                    )
+                    and possible_fd.text.isascii()
+                    and possible_fd.text.isdigit()
+                )
+                if is_unquoted_number:
+                    fd = int(possible_fd.text)
+                    words.pop()
+            pending_redirection = (token.kind, token.start, fd)
             continue
 
         if pending_redirection is not None:

@@ -105,7 +105,8 @@ class ShellBehaviorTests(unittest.TestCase):
             output_path = Path(directory) / "output.txt"
             commands = (
                 f"echo first > {output_path}\n"
-                f"echo second >> {output_path}\n"
+                f"echo replacement 1> {output_path}\n"
+                f"echo second 1>> {output_path}\n"
                 f"cat < {output_path}\n"
                 "exit\n"
             )
@@ -113,7 +114,7 @@ class ShellBehaviorTests(unittest.TestCase):
             result = self.run_shell_process(commands)
 
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, "$ $ $ first\nsecond\n$ ")
+        self.assertEqual(result.stdout, "$ $ $ $ replacement\nsecond\n$ ")
         self.assertEqual(result.stderr, "")
 
     def test_stateful_builtin_in_pipeline_does_not_change_parent_directory(self) -> None:
