@@ -25,40 +25,39 @@ class ExecutionResult:
 @dataclass(frozen=True)
 class _PreparedCommand:
     arguments: tuple[str, ...]
-    redirections: tuple[tuple[TokenKind, str], ...]
+    redirections: tuple[tuple[TokenKind, str, int], ...]
 
 
 def _prepare_command(command, environment: Mapping[str, str]) -> _PreparedCommand:
     arguments = expand_words(command.words, environment)
-    redirections: list[tuple[TokenKind, str]] = []
+    redirections: list[tuple[TokenKind, str, int]] = []
     for redirection in command.redirections:
         targets = expand_word(redirection.target, environment)
         if len(targets) != 1:
             raise ExecutionError("ambiguous redirection")
-        redirections.append((redirection.operator, targets[0]))
+        redirections.append((redirection.operator, targets[0], redirection.fd))
     return _PreparedCommand(arguments, tuple(redirections))
 
 
 def _open_redirections(
-    redirections: tuple[tuple[TokenKind, str], ...],
+    redirections: tuple[tuple[TokenKind, str, int], ...],
     stack: contextlib.ExitStack,
-) -> tuple[TextIO | None, TextIO | None]:
-    input_stream: TextIO | None = None
-    output_stream: TextIO | None = None
-    for operator, path in redirections:
+) -> dict[int, TextIO]:
+    streams: dict[int, TextIO] = {}
+    for operator, path, fd in redirections:
         if operator is TokenKind.REDIRECT_INPUT:
-            input_stream = stack.enter_context(open(path, "r"))
+            streams[fd] = stack.enter_context(open(path, "r"))
         elif operator is TokenKind.REDIRECT_OUTPUT:
-            output_stream = stack.enter_context(open(path, "w"))
+            streams[fd] = stack.enter_context(open(path, "w"))
         elif operator is TokenKind.REDIRECT_APPEND:
-            output_stream = stack.enter_context(open(path, "a"))
-    return input_stream, output_stream
+            streams[fd] = stack.enter_context(open(path, "a"))
+    return streams
 
 
 def _run_single(command: _PreparedCommand, environment: Mapping[str, str]) -> int:
     with contextlib.ExitStack() as stack:
         try:
-            input_stream, output_stream = _open_redirections(command.redirections, stack)
+            redirected_streams = _open_redirections(command.redirections, stack)
         except OSError as error:
             sys.stderr.write(f"shell: {error}\n")
             return 1
@@ -69,12 +68,11 @@ def _run_single(command: _PreparedCommand, environment: Mapping[str, str]) -> in
         name = command.arguments[0]
         arguments = list(command.arguments[1:])
         if name in BUILTIN_COMMANDS:
-            stdout_context = (
-                contextlib.redirect_stdout(output_stream)
-                if output_stream is not None
-                else contextlib.nullcontext()
-            )
-            with stdout_context:
+            with contextlib.ExitStack() as output_context:
+                if 1 in redirected_streams:
+                    output_context.enter_context(contextlib.redirect_stdout(redirected_streams[1]))
+                if 2 in redirected_streams:
+                    output_context.enter_context(contextlib.redirect_stderr(redirected_streams[2]))
                 return run_builtin(name, arguments, environment)
 
         path = environment.get("PATH", "")
@@ -83,10 +81,12 @@ def _run_single(command: _PreparedCommand, environment: Mapping[str, str]) -> in
             return 127
 
         options = {}
-        if input_stream is not None:
-            options["stdin"] = input_stream
-        if output_stream is not None:
-            options["stdout"] = output_stream
+        if 0 in redirected_streams:
+            options["stdin"] = redirected_streams[0]
+        if 1 in redirected_streams:
+            options["stdout"] = redirected_streams[1]
+        if 2 in redirected_streams:
+            options["stderr"] = redirected_streams[2]
         try:
             return subprocess.run(
                 list(command.arguments),
@@ -106,16 +106,15 @@ def _child_error(message: str, status: int) -> None:
         os._exit(status)
 
 
-def _apply_child_redirections(redirections: tuple[tuple[TokenKind, str], ...]) -> None:
-    for operator, path in redirections:
+def _apply_child_redirections(
+    redirections: tuple[tuple[TokenKind, str, int], ...]
+) -> None:
+    for operator, path, target_fd in redirections:
         if operator is TokenKind.REDIRECT_INPUT:
-            target_fd = 0
             flags = os.O_RDONLY
         elif operator is TokenKind.REDIRECT_OUTPUT:
-            target_fd = 1
             flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
         else:
-            target_fd = 1
             flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
         descriptor = os.open(path, flags, 0o666)
         try:
