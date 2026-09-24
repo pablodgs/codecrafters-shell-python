@@ -6,6 +6,13 @@ except ImportError:
     readline = None
 
 from app.completion import matching_builtin_commands
+
+try:
+    import readline
+except ImportError:
+    readline = None
+
+from app.completion import matching_builtin_commands
 from app.expansion import expand_words
 from app.execution import execute_pipeline
 from app.parsing import parse
@@ -52,11 +59,17 @@ def main():
         else:
             readline.parse_and_bind("tab: complete")
 
+    if readline is not None:
+        readline.set_completer(_complete_builtin)
+        if hasattr(readline, "set_completion_append_character"):
+            readline.set_completion_append_character(" ")
+        if getattr(readline, "backend", None) == "editline":
+            readline.parse_and_bind("bind ^I rl_complete")
+        else:
+            readline.parse_and_bind("tab: complete")
+
     # REPL loop
     while True:
-        sys.stdout.write("$ ")
-        sys.stdout.flush()
-
         # Read user input from standard input
         raw_user_input = _read_user_input()
         if not raw_user_input:
